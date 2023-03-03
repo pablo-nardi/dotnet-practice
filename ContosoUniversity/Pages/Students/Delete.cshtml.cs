@@ -53,20 +53,35 @@ namespace ContosoUniversity.Pages.Students
 
         public async Task<IActionResult> OnPostAsync(int? id)
         {
-            if (id == null || _context.Students == null)
+            if (id == null)
             {
                 return NotFound();
             }
+
             var student = await _context.Students.FindAsync(id);
 
-            if (student != null)
+            if (student == null)
             {
-                Student = student;
-                _context.Students.Remove(Student);
-                await _context.SaveChangesAsync();
+                return NotFound();
             }
+            try
+            {
+                _context.Students.Remove(student);
+                await _context.SaveChangesAsync();
+                return RedirectToPage("./Index");
+            }
+            catch (DbUpdateException ex)
+            {
+                _logger.LogError(ex, ErrorMessage);
 
-            return RedirectToPage("./Index");
+                return RedirectToAction("./Delete",
+                                        new
+                                        {
+                                            id,
+                                            saveChangesError = true
+                                        });
+            }
+            
         }
     }
 }
